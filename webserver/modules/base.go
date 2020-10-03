@@ -1,7 +1,13 @@
 package modules
 
-import "github.com/gin-gonic/gin"
+import (
+	"io"
+
+	"github.com/gin-gonic/gin"
+	"github.com/opentracing/opentracing-go"
+)
 
 type WebAPI interface {
 	RegisterInRouter(router gin.IRouter, path string)
+	InitTracer() (opentracing.Tracer, io.Closer)
 }

@@ -9,8 +9,8 @@ import (
 
 func main() {
 	router := webserver.CreateServer()
+	defer webserver.CloseTracer()
 	go router.Run("localhost:8889")
-
 	http.Handle("/metrics", promhttp.Handler())
 	http.ListenAndServe(":2112", nil)
 }
