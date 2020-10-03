@@ -11,6 +11,7 @@ func CreateServer() *gin.Engine {
 	r := gin.New()
 	r.Use(middleware.Logger())
 	r.Use(gin.Logger())
+	r.Use(middleware.UptimeMetrics())
 	cal := calculater.Module("calculater")
 	cal.RegisterInRouter(r, "/cal")
 	return r

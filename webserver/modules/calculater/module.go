@@ -1,6 +1,7 @@
 package calculater
 
 import (
+	"technest/tracing-log-metric/webserver/middleware"
 	"technest/tracing-log-metric/webserver/modules"
 
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,7 @@ type module struct {
 func (m *module) RegisterInRouter(router gin.IRouter, path string) {
 	calGroup := router.Group(path)
 	{
-		calGroup.GET("/plus", plus)
-		calGroup.GET("/sub", sub)
+		calGroup.GET("/plus", plus, middleware.OpsPlusMetrics())
+		calGroup.GET("/sub", sub, middleware.OpsSubMetrics())
 	}
 }
