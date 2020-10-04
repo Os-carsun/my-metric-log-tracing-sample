@@ -8,6 +8,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/opentracing/opentracing-go"
+	tracelog "github.com/opentracing/opentracing-go/log"
+	"github.com/uber/jaeger-client-go"
 )
 
 const (
@@ -43,6 +46,10 @@ type Client struct {
 
 	// Buffered channel of outbound messages.
 	send chan []byte
+
+	// OpenTracer
+	tracer     opentracing.Tracer
+	parentSpan opentracing.Span
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -98,6 +105,17 @@ func (c *Client) writePump() {
 			}
 			w.Write(message)
 
+			spanCtx := c.parentSpan.Context().(jaeger.SpanContext)
+			span := opentracing.StartSpan(
+				"write_msg",
+				jaeger.SelfRef(spanCtx),
+			)
+
+			span.LogFields(
+				tracelog.String("msg", string(message)),
+			)
+
+			span.Finish()
 			// Add queued chat messages to the current websocket message.
 			n := len(c.send)
 			for i := 0; i < n; i++ {
@@ -134,14 +152,19 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 }
 
 // Gin version
-func startClient(hub *Hub) func(c *gin.Context) {
+func startClient(hub *Hub,
+	tracer opentracing.Tracer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+		client := &Client{hub: hub,
+			conn:       conn,
+			tracer:     tracer,
+			parentSpan: opentracing.StartSpan("ws-client"),
+			send:       make(chan []byte, 256)}
 		client.hub.register <- client
 		go client.writePump()
 		go client.readPump()

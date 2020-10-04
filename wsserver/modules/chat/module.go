@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"fmt"
+	"io"
 	"technest/tracing-log-metric/config"
 	"technest/tracing-log-metric/webserver/modules"
 
@@ -43,7 +45,7 @@ type module struct {
 func (m *module) Init(router *gin.Engine) {
 	m.hub = newHub()
 	router.LoadHTMLGlob("template/*.html")
-	router.GET("/start", startClient(m.hub))
+	router.GET("/start", startClient(m.hub, m.Tracer))
 	router.GET("/home", func(c *gin.Context) {
 		c.HTML(200, "home.html", nil)
 	})
@@ -51,4 +53,13 @@ func (m *module) Init(router *gin.Engine) {
 
 func (m *module) Start() {
 	m.hub.run()
+}
+
+func (m *module) InitTracer() (opentracing.Tracer, io.Closer) {
+	t, c, err := m.Config.Tracing.New(m.Service)
+	if err != nil {
+		panic(fmt.Sprintf("Init failed: %v\n", err))
+	}
+	m.Tracer = t
+	return t, c
 }

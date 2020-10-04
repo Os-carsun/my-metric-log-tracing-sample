@@ -15,4 +15,5 @@ type WebAPI interface {
 type WSAPI interface {
 	Init(router *gin.Engine)
 	Start()
+	InitTracer() (opentracing.Tracer, io.Closer)
 }
