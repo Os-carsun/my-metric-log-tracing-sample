@@ -11,3 +11,8 @@ type WebAPI interface {
 	RegisterInRouter(router gin.IRouter, path string)
 	InitTracer() (opentracing.Tracer, io.Closer)
 }
+
+type WSAPI interface {
+	Init(router *gin.Engine)
+	Start()
+}

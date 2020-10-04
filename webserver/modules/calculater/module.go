@@ -30,7 +30,7 @@ func Module(serviceName string) modules.WebAPI {
 			},
 		},
 		Tracer:  nil,
-		Service: "calculater",
+		Service: serviceName,
 	}
 }
 
